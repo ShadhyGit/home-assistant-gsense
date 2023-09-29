@@ -121,93 +121,223 @@ class ZenggeMeshFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_zengge_connect(self, user_input: Optional[Mapping] = None):
-
-        errors = {}
-        username: str = ''
-        password: str = ''
-        typeStr: str = ''
-        zengge_connect = None
-
-
-        if user_input is not None:
-            username = user_input.get(CONF_USERNAME)
-            password = user_input.get(CONF_PASSWORD)
-
-        if username and password:
-            try:
-                zengge_connect = await self.hass.async_add_executor_job(create_zengge_connect_object, username, password)
-            except Exception as e:
-                _LOGGER.error('Can not login to Zengge cloud [%s]', e)
-                errors[CONF_PASSWORD] = 'cannot_connect'
-
-        if user_input is None or zengge_connect is None or errors:
-            return self.async_show_form(
-                step_id="zengge_connect",
-                data_schema=vol.Schema({
-                    vol.Required(CONF_USERNAME, default=username): str,
-                    vol.Required(CONF_PASSWORD, default=password): str,
-                }),
-                errors=errors,
-            )
-
-        devices = []
-        for device in await zengge_connect.devices():
-            _LOGGER.debug('Processing device - %s', device)
-            if 'wiringType' in device:
-                if device['wiringType'] == 0:
-                    _LOGGER.warning('Skipped device, wiringType of 0 - %s', device)
-                    continue
-            if 'deviceType' not in device:
-                _LOGGER.warning('Skipped device, missing deviceType - %s', device)
-                continue
-            if 'meshAddress' not in device or not device['meshAddress']:
-                _LOGGER.warning('Skipped device, missing meshAddress - %s', device)
-                continue
-            if 'macAddress' not in device:
-                _LOGGER.warning('Skipped device, missing macAddress - %s', device)
-                continue
-            if 'displayName' not in device:
-                _LOGGER.warning('Skipped device, missing displayName - %s', device)
-                continue
-
-            if 'modelName' not in device:
-                device['modelName'] = 'unknown'
-            if 'vendor' not in device:
-                device['vendor'] = 'unknown'
-            if 'firmwareRevision' not in device:
-                device['firmwareRevision'] = 'unknown'
-            if 'versionNum' not in device:
-                device['versionNum'] = None
-            if device['deviceType'] == 65:
-                typeStr = 'light|color|temperature|dimming'
-            else:
-                _LOGGER.warning('deviceType #: %s', device['deviceType'])
-                typeStr = 'light|color|temperature|dimming'
-
-            devices.append({
-                'mesh_id': int(device['meshAddress']),
-                'name': device['displayName'],
-                'mac': device['macAddress'],
-                'model': device['modelName'],
-                'manufacturer': device['vendor'],
-                'firmware': device['firmwareRevision'],
-                'hardware': device['versionNum'],
-                'type': typeStr
-            })
-
-        if len(devices) == 0:
-            return self.async_abort(reason="no_devices_found")
-
-        credentials = zengge_connect.credentials()
+        devices = [
+            {
+                "mesh_id": 12,
+                "name": "Dining Near_Window",
+                "mac": "a4:c1:38:90:49:8a",
+                "model": "unknown",
+                "manufacturer": "unknown",
+                "firmware": "unknown",
+                "hardware": None,
+                "type": "light"
+            },
+            {
+                "mesh_id": 11,
+                "name": "Dining Near_Living",
+                "mac": "a4:c1:38:8a:72:97",
+                "model": "unknown",
+                "manufacturer": "unknown",
+                "firmware": "unknown",
+                "hardware": None,
+                "type": "light"
+            },
+            {
+                "mesh_id": 42,
+                "name": "Dhyaan Bottom_Left",
+                "mac": "a4:c1:38:90:9c:8a",
+                "model": "unknown",
+                "manufacturer": "unknown",
+                "firmware": "unknown",
+                "hardware": None,
+                "type": "light"
+            }
+            # {
+            #     "mesh_id": 45,
+            #     "name": "Dhyaan Bottom_Right",
+            #     "mac": "a4:c1:38:96:56:6e",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 46,
+            #     "name": "Dhyaan Center",
+            #     "mac": "a4:c1:38:8a:4f:97",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 43,
+            #     "name": "Dhyaan Top_Left",
+            #     "mac": "a4:c1:38:96:8e:6e",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 44,
+            #     "name": "Dhyaan Top_Right",
+            #     "mac": "a4:c1:38:8a:5a:97",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 53,
+            #     "name": "Master Bathroom",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32774,
+            #     "name": "Lounge",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32775,
+            #     "name": "Kitchen",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32776,
+            #     "name": "Sink",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32769,
+            #     "name": "Living",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32782,
+            #     "name": "Dhyaan Room",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32779,
+            #     "name": "Neel Room",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32772,
+            #     "name": "Master Bedroom",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32773,
+            #     "name": "Entrance Hallway",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32781,
+            #     "name": "Hallway",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32777,
+            #     "name": "Dining Room",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32778,
+            #     "name": "Alfresco",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 32780,
+            #     "name": "Guest Bedroom",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # },
+            # {
+            #     "mesh_id": 65535,
+            #     "name": "House Lights",
+            #     "mac": "",
+            #     "model": "unknown",
+            #     "manufacturer": "unknown",
+            #     "firmware": "unknown",
+            #     "hardware": None,
+            #     "type": "light"
+            # }
+            ]
 
         data = {
-            CONF_MESH_NAME: credentials['meshKey'],
-            CONF_MESH_PASSWORD: credentials['meshPassword'],
-            CONF_MESH_KEY: credentials['meshLTK'],
-            # 'zengge_connect': {
-            #     CONF_USERNAME: user_input[CONF_USERNAME],
-            #     CONF_PASSWORD: user_input[CONF_PASSWORD]
-            # },
+            CONF_MESH_NAME: "Gsense_Mesh",
+            CONF_MESH_PASSWORD: "321",
+            CONF_MESH_KEY: "unknown",
             'devices': devices
         }
 
